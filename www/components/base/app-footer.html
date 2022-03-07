@@ -1,0 +1,47 @@
+<!-- text-template -->
+<script type="text/x-template" id="app-footer-component-template">
+    <div class="app-footer-component"><slot></slot></div>
+</script>
+<script type="text/javascript">
+Vue.component('app-footer', {
+    template: '#app-footer-component-template',
+    data: function(){
+        return {
+        }
+    },
+    props: { 
+    },
+    mounted:function(){
+        console.log("app-footer-component mounted");
+        var self = this;
+    },
+    methods: {
+    },
+    computed:{
+    }
+});
+</script>
+<style>
+.app-footer-component{
+    font-size: 16px;
+    line-height: 1.5em;
+    background-color: rgba(0,0,0,0.2);
+    padding: 6px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+}
+@media (max-height: 400px){
+    .app-footer-component{
+        height:15px;
+        font-size: 10px;
+        padding: 2px;
+    }
+}
+
+</style>
+    

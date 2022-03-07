@@ -1,0 +1,53 @@
+<!-- text-template -->
+<script type="text/x-template" id="splash-template">
+    <div class="splash" is="app-layout" ref="layout" title="Splash" :full="true">
+        <div class="splash-container">
+            <img src="img/app/icon.png" >
+        </div>
+    </div>
+</script>
+<script type="text/javascript">
+Splash = Vue.component('splash', {
+    template: '#splash-template',
+    data: function(){
+        return {
+            layout: null,
+        }
+    },
+    props: {
+        timeout: {
+            type: Number,
+            default:1000
+        }
+    },
+    mounted:function(){
+        console.log("splash mounted");
+        var self = this;
+        window.content = this;
+        this.layout = this.$refs['layout'];
+        setTimeout(function(){
+            self.$router.push('/home')
+        },self.timeout);
+    },
+    methods: {
+    },
+    computed:{
+    }
+});
+</script>
+<style>
+.splash-container{
+    top: 0;
+    position: fixed;
+    width:100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content:center;
+    align-items: center;
+}
+.splash img{
+    display: inline-block;
+}
+</style>
+    

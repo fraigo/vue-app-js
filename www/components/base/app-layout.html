@@ -1,0 +1,287 @@
+<!-- text-template -->
+<script type="text/x-template" id="app-layout-template">
+    <div class="app-layout default-style" :header="header" :footer="footer" :style="{fontSize:size+'rem'}" ref="layout">
+        <div v-if="header" is="app-toolbar" :title="title?title:language.translate('app_name')" >
+            <slot name="toolbar"></slot>
+        </div>
+        <transition-group name="fade" tag="div" class="app-main">
+            <div class="main-content" key="content">
+                <slot></slot>
+            </div>
+            <div class="app-message" v-if="message" :key="message?message:''"><div >{{message}}</div></div>
+        </transition-group>
+        <div is="popup" :info="popup" ref="popup"></div>
+        <div is="app-loading" v-if="loading"><img src="img/app/loading.png"></div>
+        <div v-if="footer" is="app-footer">
+            <slot name="footer"></slot>
+        </div>
+    </div>
+</script>
+<script type="text/javascript">
+
+    var errorHandler=function(err, data){
+        console.log(err, data);
+    }
+    var APPDATA_KEY='appdata.hamster'
+    window.addEventListener("error",errorHandler);
+    Vue.config.errorHandler = errorHandler;
+
+    Vue.component('app-layout', {
+        template: '#app-layout-template',
+        data: function(){
+            return {
+                size: 1.2,
+                lang: "es",
+                language: language,
+                level: 0,
+                message: null,
+                loading: false,
+                contentData: null,
+                popup: {},
+                cacheId: (new Date()).getTime(),
+                actions: {
+                    'setLanguage' : true
+                }
+            }
+        },
+        props: { 
+            title: String,
+            header: Boolean,
+            footer: Boolean,
+        },
+        created:function(){
+            var self = this
+        },
+        mounted:function(){
+            window.app=this
+            var self = this
+            var appLang = localStorage.getItem('applang')
+            if (appLang && appLang != '') {
+                this.setLanguage({value:appLang})
+            }else {
+                this.setLanguage({value:'es'})
+            }
+            var applayout=self.$refs.layout;
+            window.addEventListener("keyup",function(ev){
+                console.log('ev',ev.keyCode)
+                if (ev.keyCode == 27) {
+                    self.popup = null
+                }
+            })
+            window.addEventListener("resize",function(ev){
+                self.resize()
+            })
+            self.resize()
+            window.addEventListener("scroll",function(ev){
+                var doc = document.documentElement
+                var scrollTop = (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0);
+                var isScrolling = document.body.getAttribute("scrolling")==1;
+                var limit=12;
+                if (isScrolling){
+                    limit=11;
+                }
+                if (scrollTop>limit){
+                    document.body.setAttribute("scrolling",1);
+                }else{
+                    document.body.setAttribute("scrolling",0);
+                }
+            })
+        },
+        methods: {
+            changePosition: function(pos){
+                this.current=pos
+            },
+            loadAppData: function(){
+                var appDataContent = localStorage.getItem(APPDATA_KEY)
+                var appData = {}
+                if (appDataContent) {
+                    appData = JSON.parse(appDataContent)
+                }
+                return appData
+            },
+            saveAppData: function(appData){
+                localStorage.setItem(APPDATA_KEY,JSON.stringify(appData))
+            },
+            translate: function (expr) {
+                return this.language.translate(expr)
+            },
+            resize: function() {
+                var vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+                var vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
+                if (vw>vh) {
+                    this.$refs.layout.setAttribute('mode','landscape')
+                } else {
+                    this.$refs.layout.setAttribute('mode','portrait')
+                }
+            },
+            alert: function(title,message,buttons,callback) {
+                this.popup={
+                    title: title,
+                    message: message,
+                    callback: callback,
+                    buttons: buttons
+                }
+                this.$refs.popup.show(this.popup)
+                this.$forceUpdate()
+            },
+            confirm: function(title,message,callback) {
+                this.alert(title,message,["Cancel","Ok"],callback)
+            },
+            showMessage: function(msg, timeout){
+                clearTimeout(window.messageTimeout)
+                this.message = msg;
+                window.messageTimeout = setTimeout(function(self){
+                    self.message = null
+                }, timeout?timeout:5000, this)
+                this.$forceUpdate()
+            },
+            setLanguage: function(options) {
+                console.log('lang', options.value)
+                this.lang = options.value
+                this.language.selected = this.lang
+                localStorage.setItem('applang', options.value)
+            },
+            setupLanguage: function(){
+                var self=this
+                this.alert(language.translate('Language'),language.translate('Select language'),{
+                    "en":language.en.lang_name,
+                    "es":language.es.lang_name
+                },function(button,idx){
+                    self.setLanguage({value:idx})
+                })
+            },
+            action: function (event) {
+                var action = event.action
+                if (this.actions[action]){
+                    this[action](event.data)
+                }
+            }
+        },
+        computed:{
+        }
+    });
+</script>
+<style>
+.app-layout{
+    margin: 0;
+    border: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-size: 18px;
+    min-height: 100vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.app-main{
+    flex:1;
+    padding: 0;
+}
+.app-layout[footer='true'] .app-main{
+    padding: 0 16px;
+}
+.app-layout[header='true'] .app-main{
+    padding: 0 16px;
+    padding-top: 3rem;
+}
+.app-main > .main-content{
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 12px 0;
+}
+.app-message{
+    position: fixed;
+    left: 0;
+    bottom: 10%;
+    width: 100%;
+    z-index: 10;
+}
+.app-message > div{
+    margin: 0 auto;
+    max-width: 640px;
+    padding: 12px;
+    text-align: center;
+    font-size: 16px;
+    border-radius: 7px;
+    background-color: rgba(0,0,0,0.7);
+    color: #fff;
+}
+.app-message.visible{
+    display: block;
+}
+#app button{
+    color: #444;
+    background-color: #FFC;
+    border: 2px solid #EA1;
+    padding: 0px 12px;
+    font-size: 1.25rem;
+    border-radius: 5px;
+    line-height: 1.5rem;
+    height: 2.4rem;
+    margin: 0 8px;
+}
+*[inactive='true']{
+    opacity: 0.4;
+}
+.material-icons{
+    font-size: 1em;
+}
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter{
+  opacity: 0;
+  font-size: 8px;
+}
+.fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+  font-size: 8px;
+  display: none;
+}
+.zoom-enter-active, .zoom-leave-active {
+  transition: all .5s;
+}
+.zoom-enter{
+  opacity: 0;
+  size: 1px;
+  size: 1px;
+}
+.zoom-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+  size: 1px;
+  size: 1px;
+}
+.default-style{
+    background-color: rgb(255,255,255);
+    background-color: rgba(255,255,255,0.8);
+    color: #222;
+}
+.darker-style{
+    background-color: rgb(200,200,200);
+    background-color: rgba(200,200,200,0.8);
+    color: #222;
+}
+@media (prefers-color-scheme: dark) {
+    .default-style{
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.8);
+        color: #f0f0f0;
+    }
+    .darker-style{
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.8);
+        color: #f0f0f0;
+    }
+    #app button{
+        background-color: #FFA;
+        color: #222;
+    }
+}
+@media (max-width:480px){
+    .app-message{
+        font-size: 0.9em;
+    }
+}
+@media (max-height: 400px){
+}
+</style>

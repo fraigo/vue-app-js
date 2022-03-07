@@ -1,0 +1,87 @@
+<!-- text-template -->
+<script type="text/x-template" id="app-component-template">
+    <div class="app" is="app-layout" ref="layout" title="App" header="true">
+        <template slot="toolbar" >
+            <a key="home" v-if="appData.contentId" @click="home()" ><i class="fas fa-home"></i></a>
+            <a key="lang" v-if="!appData.contentId" @click="layout.setupLanguage()" ><i class="fas fa-globe"></i></a>
+        </template>
+        <div v-if="!appData.contentId">
+            <button @click="loadContent('home')">Home</button>
+        </div>
+        <div v-if="appData.contentId">
+            {{contentData}}
+        </div>
+        <template slot="footer" >
+        </template>
+    </div>
+</script>
+<script type="text/javascript">
+App = Vue.component('app', {
+    template: '#app-component-template',
+    data: function(){
+        return {
+            appData: {},
+            contentData: null,
+            layout: null,
+        }
+    },
+    props: { 
+    },
+    mounted:function(){
+        console.log("app-component mounted");
+        var self = this;
+        window.content = this;
+        this.layout = this.$refs['layout'];
+        this.appData = this.layout.loadAppData()
+        var contentId = this.getContentId(true,true)
+        this.loadContent(contentId)
+    },
+    methods: {
+        getContentId: function(fromPath,fromHash,defValue){
+            if (fromPath){
+                var param = document.location.search.replace('?','').split('/');
+                if (param[0]!=''){
+                    this.appData.contentId = param[0];
+                }
+            }
+            if (fromHash){
+                var hash=document.location.hash.replace('#','').split('/')
+                if (hash[0]!=''){
+                    this.appData.contentId = hash[0];
+                }
+            }
+            if (!this.appData.contentId){
+                this.appData.contentId = defValue;
+            }
+            return this.appData.contentId
+        },
+        home: function(){
+            this.contentData=null
+            this.appData.contentId=null
+            this.layout.saveAppData(this.appData)
+        },
+        loadHash: function(){
+            var hash=document.location.hash.replace('#','').split('/')
+            this.loadContent(hash[0])
+        },
+        loadContent: function(id){
+            if (!id) return;
+            var self = this
+            loadData("data/"+self.layout.lang+"/"+id+".json", function(data){
+                self.contentData=JSON.parse(data)
+                self.appData.contentId = id
+                self.layout.saveAppData(self.appData)
+            })
+        }
+    },
+    computed:{
+    }
+});
+</script>
+<style>
+.app-component{
+    font-size: 16px;
+    line-height: 1.5em;
+}
+</style>
+    

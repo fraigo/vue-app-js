@@ -1,0 +1,63 @@
+<!-- text-template -->
+<script type="text/x-template" id="app-toolbar-component-template">
+    <div class="app-toolbar-component darker-style">
+        <div class="toolbar-title"><img src="./img/app/icon.png" height="24">{{title}}</div>
+        <div class="toolbar-buttons">
+            <slot></slot>
+        </div>
+    </div>
+</script>
+<script type="text/javascript">
+Vue.component('app-toolbar', {
+    template: '#app-toolbar-component-template',
+    data: function(){
+        return {
+            zoom : 1
+        }
+    },
+    props: {
+        title: String
+    },
+    mounted:function(){
+        console.log("app-toolbar-component mounted");
+        var self = this;
+    },
+    methods: {
+    },
+    computed:{
+    }
+});
+</script>
+<style>
+.app-toolbar-component{
+    width: 100%;
+    line-height: 1.4em;
+    position: -webkit-sticky;
+    position: -moz-sticky;
+    position: -o-sticky;
+    position: -ms-sticky;
+    position: fixed;
+    top: -2px;
+    z-index: 10;
+    opacity: 1;
+    transition: opacity linear .3s;
+    height: 3rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0 16px;
+    justify-content:space-between;
+}
+.app-toolbar-component .toolbar-title img{
+    height: 1.4em;
+    vertical-align: middle;
+    padding-right: 6px;
+}
+@media (max-height: 400px){
+    body[scrolling='1'] .app-toolbar-component {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+</style>
+    

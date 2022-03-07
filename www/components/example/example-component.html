@@ -1,0 +1,30 @@
+<!-- text-template -->
+<script type="text/x-template" id="example-component-template">
+    <div class="example-component"><slot></slot></div>
+</script>
+<script type="text/javascript">
+Vue.component('example', {
+    template: '#example-component-template',
+    data: function(){
+        return {
+        }
+    },
+    props: { 
+    },
+    mounted:function(){
+        console.log("example-component mounted");
+        var self = this;
+    },
+    methods: {
+    },
+    computed:{
+    }
+});
+</script>
+<style>
+.example-component{
+    font-size: 16px;
+    line-height: 1.5em;
+}
+</style>
+    
