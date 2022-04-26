@@ -42,7 +42,19 @@ var loadComponent = function(id, callback){
     loadData(componentFile+suffix,function(text){
         var e=document.createElement("div");
         e.id="component-"+id
-        e.innerHTML=text.replace('</style>',"/*# sourceURL="+componentFile+'*/\n</style>')
+        var innerText = text 
+        var pos1=text.indexOf("<style")
+        if (pos1>0){
+            var prefix = text.substring(0,pos1-1)
+            var lines=prefix.split('\n').length
+            var extra=""
+            for(var i=0;i<lines;i++){
+                extra+='\n';
+            }
+            innerText=innerText.replace('<style>','<style>'+extra)
+        }
+        innerText = innerText.replace('</style>',"/*# sourceURL="+componentFile+'*/\n</style>')
+        e.innerHTML = innerText
         var loaded = false
         var scripts=e.querySelectorAll("script[type='text/javascript']");
         var scssStyles=e.querySelectorAll("style[lang='scss']");
@@ -81,7 +93,7 @@ var loadComponent = function(id, callback){
                         break;
                     }
                 }
-                var post = "//# sourceURL="+componentFile //+".js"
+                var post = "//# sourceURL="+componentFile+".js"
                 eval(prefix+script.innerHTML+post);
             }    
         }
