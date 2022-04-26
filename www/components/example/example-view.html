@@ -1,0 +1,45 @@
+<!-- text-template -->
+<script type="text/x-template" id="example-template">
+    <div class="example-view" is="app-layout" ref="layout" :title="title"  :full="false" :header="true">
+        <template slot="toolbar" is="menuitems" :layout="layout">
+        </template>
+        <div class="main-container">
+            Example view content
+        </div>
+    </div>
+</script>
+<script type="text/javascript">
+Example = Vue.component('example', {
+    template: '#example-template',
+    data: function(){
+        return {
+            layout: null,
+            title: 'Example'
+        }
+    },
+    props: {
+    },
+    mounted:function(){
+        console.log("example mounted");
+        var self = this;
+        window.content = this;
+        this.layout = this.$refs['layout'];
+    },
+    methods: {
+    },
+    computed:{
+    }
+});
+</script>
+<style>
+.example-view{
+}
+.example-view.fixed-view {
+    top: 0;
+    left: 0;
+    position: fixed;
+    width:100%;
+    height: 100%;
+}
+</style>
+    

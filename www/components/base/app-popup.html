@@ -1,22 +1,29 @@
 <!-- text-template -->
 <script type="text/x-template" id="popup-component-template">
-    <transition-group tag="div" class="popup-component" v-show="visible">
-        <div class="popup-component-content  default-style" :key="visible?1:0" v-if="visible">
+    <div :class="['popup-component',popup.className,currentMode]" v-show="visible" :state="popupState" @click="hide()">
+        <div class="popup-component-content  default-style" :key="visible?1:0" v-if="visible" @click.stop="">
             <div class="close-popup" @click="hide()"><span class="material-icons">close</span></div>
             <h3 v-if="popup.title">{{popup.title}}</h3>
             <div v-if="popup.message" class="popup-message">{{popup.message}}</div>
             <div class="popup-component-buttons" v-if="popup.buttons">
-                <button @click.stop="popupButton(but,key)" :key="key" v-for="(but,key) in popup.buttons">{{but}}</button>
+                <button @click.stop="popupButton(but,key)" :key="key" v-for="(but,key) in popup.buttons" v-html="but" ></button>
             </div>
         </div>
-    </transition-group>
+    </div>
 </script>
 <script type="text/javascript">
 Vue.component('popup', {
     template: '#popup-component-template',
     data: function(){
         return {
-            popup: {},
+            popupState: 'closed',
+            popup: {
+                className: null,
+                mode: null,
+                buttons: [],
+                title: null,
+                message: null,
+            },
             visible: false
         }
     },
@@ -32,15 +39,28 @@ Vue.component('popup', {
     },
     methods: {
         show: function(data) {
-            console.log('show', data)
+            //console.log('show', data)
             this.popup = data
             this.visible = true
+            this.popupState = 'opening'
+            var self = this
+            this.$nextTick(function(){
+                self.popupState = 'open'
+                self.$forceUpdate()
+            })
             this.$forceUpdate()
         },
         hide: function() {
-            console.log('show')
-            this.visible = false
-            this.$forceUpdate()
+            //console.log('hide')
+            var self = this
+            this.popupState = 'opening'
+            this.$nextTick(function(){
+                setTimeout(function(){
+                    self.popupState = 'closed'
+                    self.visible = false
+                },500)
+                self.$forceUpdate()
+            })
         },
         popupButton: function(label, idx) {
             if (this.popup.callback) {
@@ -55,6 +75,14 @@ Vue.component('popup', {
                 title: title,
                 buttons: ["Ok"]
             })
+        }
+    },
+    computed: {
+        currentMode: function(){
+            var modes = {
+                bottom: 'popup-bottom'
+            }
+            return modes[this.popup.mode] || 'popup-default'
         }
     },
     watch:{
@@ -76,14 +104,19 @@ Vue.component('popup', {
     width: 100%;
     height: 100vh;
     position: fixed;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(32,32,32,0.8);
     top: 0;
     left: 0;
     z-index: 20;
     display: flex;
 }
 .popup-component h3{
-    margin: 3vh auto;
+    margin: 3vh auto 1vh auto;
+}
+.popup-component-buttons{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content:center;
 }
 .popup-component button[disabled] {
     background-color: #ccc;
@@ -95,21 +128,73 @@ Vue.component('popup', {
     color: #222;
     cursor: pointer;
 }
+#app .popup-component button{
+    margin: 8px;
+}
 .popup-component-content{
     text-align: center;
     padding: 16px;
     width: 400px;
-    min-height: 160px;
-    max-width: 92vw;
+    min-height: 10em;
+    max-width: 92%;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
     border-radius: 5px;
     position: relative;
+    transition: opacity .5s;
+    opacity: 1;
+}
+.popup-component[state='opening'] .popup-component-content{
+    opacity:0;
 }
 .popup-message{
     margin: 16px;
     flex: 1;
+}
+.popup-component.popup-default{
+    justify-content: center;
+    align-items: no;
+}
+.popup-component.popup-default .popup-component-content{
+    width: 96%;
+    max-width: 96%;
+    border-radius: 7px 7px 0 0;
+    transition: bottom .5s;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    margin: 0 2%;
+}
+@media (min-width: 768px){
+    .popup-component.popup-default .popup-component-content{
+        width: 80%;
+        max-width: 80%;
+        margin: 0 10%;
+    }
+}
+.popup-component.popup-default[state='opening'] .popup-component-content{
+    bottom: -50vh;
+    opacity: 1;
+}
+@media (prefers-color-scheme: dark) {
+    .popup-component{
+        box-shadow: 0px 0px 5px rgba(255,255,255,0.2);
+    }
+    .popup-component .close-popup span{
+        color: #fff;
+    }
+}
+@media (max-height: 400px){
+    #app .popup-component button{
+        font-size: 1em;
+    }
+    .popup-component h3{
+        margin: 4px auto 4px auto;
+    }
+    .popup-message{
+        margin: 8px;
+    }
 }
 </style>
     

@@ -1,0 +1,245 @@
+<!-- text-template -->
+<script type="text/x-template" id="dragdrop-component-template">
+    <div :id="id" class="dragdrop-component" 
+        :disabled="blocked"
+        @touchstart="startDrag($event)" 
+        @touchmove="performDrag($event)" 
+        @touchend="endDrag($event)"
+        @touchcancel="cancelDrag($event)"
+        @touchleave="cancelDrag($event)"
+        @click="$emit('click',$event)" :draggable="drag" :dropzone="drop" ref="me" :tgt="target"><slot></slot></div>
+</script>
+<script type="text/javascript">
+
+var dragElement = null
+var clearId = null
+function allowDrop(ev) {
+  if (!dragElement){
+      //document.title='allowdrop'
+      return
+  }
+  var tgt = dragElement.getAttribute('tgt')
+  var classes = ev.target.className.split(' ')
+  if (classes.indexOf(tgt)>-1) {
+    ev.preventDefault();  
+    console.log(tgt)
+    ev.target.style.opacity='';
+    ev.target.setAttribute('dropable',true);
+    clearTimeout(clearId)
+    clearId=setTimeout(function(){ev.target.removeAttribute('dropable');},300)
+  } else {
+    ev.target.setAttribute('nondropable',true);
+    clearTimeout(clearId)
+    clearId=setTimeout(function(){ev.target.removeAttribute('nondraggable');},300)
+  }
+}
+
+function performDrag(ev,img) {
+  console.log('drag',ev.target.id,img!=null)
+  ev.dataTransfer.setData("text", ev.target.id);
+  if (img) {
+    ev.dataTransfer.setDragImage(img,50,50);
+  }
+  dragElement = ev.target;
+}
+
+function performDrop(ev,copy,dzone) {
+  console.log('drop',ev.target.id,copy)
+  ev.preventDefault();
+  var data = ev.dataTransfer.getData("text");
+  var el = document.getElementById(data)
+  var tgt = ev.target
+  if (dzone){
+      tgt = dzone
+  }
+  if (copy) {
+    var newEl = el.cloneNode(true);
+    newEl.id = 'cp'+Math.random()
+    tgt.appendChild(newEl);
+  } else {
+    tgt.appendChild(el);
+  }
+  return el;
+}
+
+Vue.component('dragdrop', {
+    template: '#dragdrop-component-template',
+    data: function(){
+        return {
+            id: 'c'+Math.random(),
+            img: null,
+            srcElement: null,
+            dragElement: null,
+        }
+    },
+    props: { 
+        drag: {
+            type: Boolean,
+            default: false
+        },
+        drop: {
+            type: Boolean,
+            default: false
+        },
+        dropzone: String,
+        dropcopy: {
+            type: Boolean,
+            default: false
+        },
+        blocked: {
+            type: Boolean,
+            default: false
+        },
+        dragimage: String,
+        target: String,
+    },
+    created: function(){
+        var self = this
+        window.addEventListener("contextmenu",function(ev){
+            self.cancelDrag(ev)
+        })
+        window.addEventListener("blur",function(ev){
+            self.cancelDrag(ev)
+        })
+    },
+    mounted:function(){
+        console.log("dragdrop-component mounted");
+        var self = this;
+        var me = self.$refs.me
+        if (self.drag){
+            me.addEventListener('dragstart',function(ev){
+                if (self.blocked) return true;
+                performDrag(ev,self.img)
+                setTimeout(function(){
+                    self.$emit('dragging',true)
+                },100)
+            });
+            me.addEventListener('dragend',function(ev){
+                self.$emit('dragging',false)
+            })
+        }
+        if (self.drop){
+            me.addEventListener('drop',function(ev){
+                if (self.blocked) return true;
+                var zone = self.dropzone ? document.querySelector(self.dropzone) : ev.target
+                var el = performDrop(ev,self.dropcopy,zone)
+                var vueEl = el.__vue__
+                if (vueEl){
+                    vueEl.$emit('dragging',false)
+                }
+                self.$emit('dropitem',{el:el,target:ev.target,dropzone:zone})
+            });
+            me.addEventListener('dragover',function(ev){
+                if (self.blocked) return true;
+                allowDrop(ev)
+            });
+        }
+        if (this.dragimage){
+            var img = document.createElement("img");
+            img.onload = function(){ 
+                var cnv = document.createElement("canvas");
+                var max = Math.max(img.width,img.height);
+                var factor = max/100;
+                cnv.width=img.width/factor;
+                cnv.height=img.height/factor;
+                cnv.getContext("2d").drawImage(img,0,0,cnv.width,cnv.height)
+                img.onload=null
+                img.src=cnv.toDataURL();
+                window.img1=img
+            }
+            img.src = this.dragimage;
+            self.img = img
+        }
+    },
+    methods: {
+        startDrag: function(ev){
+            console.log('startDrag')
+            if (!this.drag) return;
+            var e=ev.target.cloneNode(true);
+            e.style.position='fixed'
+            e.style.top=(ev.touches[0].pageY-50)+'px'
+            e.style.left=(ev.touches[0].pageX-50)+'px'
+            e.className+=" __dragging"
+            e.style.width=ev.target.scrollWidth+'px';
+            e.style.height=ev.target.scrollHeight+'px';
+            this.dragElement=e
+            this.srcElement=ev.target
+            document.body.appendChild(e)
+        },
+        performDrag: function(ev){
+            if (!this.drag) return;
+            this.$emit('dragging',true)
+            ev.preventDefault();
+            var e=this.dragElement
+            e.style.top=(ev.touches[0].pageY-50)+'px'
+            e.style.left=(ev.touches[0].pageX-50)+'px'
+            //console.log('mv',ev.touches[0].pageX,ev.touches[0].pageY,ev.touches[0])
+        },
+        cancelDrag:function(ev){
+            if (!this.drag) return;
+            if (!this.dragElement) return;
+            console.log('cancelDrag',ev.type,this.dragElement)
+            if (this.dragElement){
+                this.$emit('dragging',false)
+                document.body.removeChild(this.dragElement)
+                this.dragElement=null
+            }
+        },
+        endDrag:function(ev){
+            console.log('endDrag')
+            if (!this.drag) return;
+            this.$emit('dragging',false)
+            var e=this.dragElement
+            var x=e.style.left.replace("px","")*1+50
+            var y=e.style.top.replace("px","")*1+50
+            document.body.removeChild(this.dragElement)
+            this.dragElement=null
+            var src=this.srcElement
+            setTimeout(function(){
+                var tgt=document.elementFromPoint(x,y)
+                var tgtVue=tgt.__vue__;
+                if (!tgtVue && tgt.parentNode.__vue__){
+                    tgtVue = tgt.parentNode.__vue__
+                }
+                if (!tgtVue) return;
+                var tgtClass = src.getAttribute('tgt')
+                var classes = tgt.className.split(' ')
+                //console.log(['end',src,x,y,tgt,tgtClass,tgt.className])
+                if (classes.indexOf(tgtClass)<0) {
+                    return
+                }
+                var zone=tgt
+                if (tgtVue.dropzone){
+                    zone=document.querySelector(tgtVue.dropzone)
+                }
+                if (tgtVue && tgtVue.dropcopy) {
+                    var newEl = src.cloneNode(true);
+                    newEl.id = 'cp'+Math.random()
+                    zone.appendChild(newEl);
+                } else {
+                    zone.appendChild(src);
+                }
+                tgtVue.$emit('dropitem',{el:src,target:tgt,dropzone:zone})
+            },100)
+
+        }
+    },
+    computed:{
+    }
+});
+</script>
+<style>
+.dragdrop-component{
+    line-height: 1.5em;
+}
+.dragdrop-component[disabled]{
+    pointer-events: none;
+}
+.draggable {
+    cursor: grab;
+}
+*[nondraggable],.dragdrop-component[disabled]{
+    opacity: 0.5;
+}
+</style>
+    

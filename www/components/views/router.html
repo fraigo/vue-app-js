@@ -1,6 +1,6 @@
 <script type="text/x-template" id="router-template">
     <div class="app" >
-        <router-view></router-view>
+        <router-view :key="$route.fullPath"></router-view>
     </div>
 </script>
 <script type="text/javascript">
@@ -9,7 +9,8 @@ Vue.component('router', {
     template: '#router-template',
     mounted:function(){
         console.log('router mounted')
-        console.log(this.$router.options)
+    },
+    computed: {
     }
 })
 </script>

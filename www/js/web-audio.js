@@ -30,17 +30,21 @@ WebAudio.prototype.loadList = function (items, successCallback, errorCallback, e
             itemsLoaded++;
             loaded.push(id);
             if (WEBAUDIO_DEBUG) console.log('loaded',id, itemsToLoad)
-            successCallback(id,audio);
+            if (successCallback){
+                successCallback(id,audio);
+            }
             delete items[audioid]
-            if (Object.keys(items).length==0){
+            if (Object.keys(items).length==0 && endCallback){
                 endCallback();
             }
             self.loadList(items, successCallback, errorCallback, endCallback)
         },function(error,id){
             if (WEBAUDIO_DEBUG) console.log('error',id,itemsToLoad)
-            errorCallback(id,error);
+            if (errorCallback){
+                errorCallback(id,error);
+            }
             delete items[audioid]
-            if (Object.keys(items).length==0){
+            if (Object.keys(items).length==0 && endCallback){
                 endCallback();
             }
             self.loadList(items, successCallback, errorCallback, endCallback)
@@ -71,7 +75,7 @@ WebAudio.prototype.load = function (url, id, successCallback, errorCallback) {
         if (url.indexOf("://")>0){
             mediaUrl = url;
         }
-        if (WEBAUDIO_DEBUG) console.log('Loading Media', mediaUrl);
+        if (WEBAUDIO_DEBUG) console.log('Loading Media', mediaUrl, 'from', url);
         var ready = false;
         var audio = new Media(mediaUrl,
             function () {
@@ -175,16 +179,17 @@ WebAudio.prototype.play = function (id, onend) {
             audio.play({ playAudioWhenScreenIsLocked : true });
             var audioPosition = 0;
             audio.getCurrentPosition(function (position) {
-                console.log('WebAudio Position', position)
+                if (WEBAUDIO_DEBUG) console.log('WebAudio Position', position)
                 audioPosition = Math.max(0,position);
                 audio.currentTime = audioPosition;
             })
             setTimeout(function(){
                 audio.getCurrentPosition(function (position) {
-                    console.log('WebAudio Position', position)
+                    var duration = audio.getDuration(id)
+                    if (WEBAUDIO_DEBUG) console.log('WebAudio check position', position, duration)
                     audio.currentTime = Math.max(0,position);
-                    if (audioPosition == Math.max(0,position)) {
-                        console.log('WebAudio FixPlay', audioPosition)
+                    if (audioPosition == Math.max(0,position) && duration>500) {
+                        if (WEBAUDIO_DEBUG) console.log('WebAudio FixPlay', audioPosition)
                         audio.play({ playAudioWhenScreenIsLocked : true });
                     }
                 })

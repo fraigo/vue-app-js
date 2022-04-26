@@ -1,14 +1,14 @@
 <!-- text-template -->
 <script type="text/x-template" id="app-component-template">
-    <div class="app" is="app-layout" ref="layout" title="App" header="true">
+    <div class="home" is="app-layout" ref="layout" :title="title" header="true">
         <template slot="toolbar" >
-            <a key="home" v-if="appData.contentId" @click="home()" ><i class="fas fa-home"></i></a>
-            <a key="lang" v-if="!appData.contentId" @click="layout.setupLanguage()" ><i class="fas fa-globe"></i></a>
+            <a key="home" v-if="contentId" @click="$router.push('/home')" ><i class="fas fa-home"></i></a>
+            <a key="lang" @click="layout.setupLanguage()" ><i class="fas fa-globe"></i></a>
         </template>
-        <div v-if="!appData.contentId">
-            <button @click="loadContent('home')">Home</button>
+        <div v-if="!contentId">
+            <button @click="$router.push('/home/example')">View Data</button>
         </div>
-        <div v-if="appData.contentId">
+        <div v-if="contentId">
             {{contentData}}
         </div>
         <template slot="footer" >
@@ -23,65 +23,85 @@ App = Vue.component('app', {
             appData: {},
             contentData: null,
             layout: null,
+            title: 'app_name',
         }
     },
     props: { 
+        contentId: String
     },
     mounted:function(){
         console.log("app-component mounted");
         var self = this;
         window.content = this;
         this.layout = this.$refs['layout'];
-        this.appData = this.layout.loadAppData()
-        var contentId = this.getContentId(true,true)
-        this.loadContent(contentId)
+        this.$store.commit('load')
+        this.loadContent(this.contentId)
+        this.$onLanguageChange(function(){
+            console.log('language changed')
+            self.loadContent(self.contentId)
+        })
     },
     methods: {
-        getContentId: function(fromPath,fromHash,defValue){
-            if (fromPath){
-                var param = document.location.search.replace('?','').split('/');
-                if (param[0]!=''){
-                    this.appData.contentId = param[0];
-                }
-            }
-            if (fromHash){
-                var hash=document.location.hash.replace('#','').split('/')
-                if (hash[0]!=''){
-                    this.appData.contentId = hash[0];
-                }
-            }
-            if (!this.appData.contentId){
-                this.appData.contentId = defValue;
-            }
-            return this.appData.contentId
-        },
-        home: function(){
-            this.contentData=null
-            this.appData.contentId=null
-            this.layout.saveAppData(this.appData)
-        },
-        loadHash: function(){
-            var hash=document.location.hash.replace('#','').split('/')
-            this.loadContent(hash[0])
-        },
         loadContent: function(id){
-            if (!id) return;
             var self = this
-            loadData("data/"+self.layout.lang+"/"+id+".json", function(data){
-                self.contentData=JSON.parse(data)
-                self.appData.contentId = id
-                self.layout.saveAppData(self.appData)
-            })
+            var lang = this.$selectedLang()
+            if (id){
+                loadData('data/'+lang+'/'+id+'.json',function(data){
+                    console.log('load',id,data)
+                    self.contentData = JSON.parse(data)
+                })
+            }
         }
     },
     computed:{
+    },
+    watch: {
+        contentId: function(newValue){
+            this.loadContent(newValue)
+        }
     }
 });
 </script>
 <style>
-.app-component{
-    font-size: 16px;
+.home{
+}
+
+.badge{
+    display: inline-block;
+    background-color: rgb(255,128,0);
+    border-radius: 99% 99%;
+    width: 1.5em;
+    height: 1.5em;
+    text-align: center;
     line-height: 1.5em;
 }
+
+.action-buttons{
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 120px;
+    height: 100vh;
+    padding-top: 50px;
+    background-color: rgba(0,0,0,0.2);
+}
+.action-button{
+    height: 3em !important;
+}
+
+@media(min-width: 680px){
+}
+@media(min-width: 1200px){
+}
+@media (max-width: 790px){
+}
+@media (max-width: 400px),(max-height: 400px){
+}
+@media (min-width: 540px) and (max-height: 400px){
+}
+@media (min-width: 768px) and (max-height: 400px){
+}
+
 </style>
     

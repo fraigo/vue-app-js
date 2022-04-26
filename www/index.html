@@ -7,6 +7,7 @@
     <link rel='shortcut icon' type='image/png' href='img/app/icon.png'> 
     <link rel='icon' type='image/png' href='img/app/icon.png'>
     <!--<script src="https://fraigo.github.io/firebug-lite/firebug-lite.js"></script>-->
+    <!--<script src="js/firebug-lite/firebug-lite.js"></script>-->
     <title>App</title>
     <style>
         html *{
@@ -28,9 +29,30 @@
             -webkit-user-select: text !important;
             user-select: text !important;
         }
+        body{
+            width:100%;
+            min-height: 100vh;
+        }
+        body[phone='true'] {
+            position: fixed;
+            overflow: hidden;
+            overscroll-behavior-y: none;
+            min-height: 100vh;
+        }
+        /* debug * /
+        div { border: 1px solid blue;}
+        span { border: 1px solid green;}
+        /* */
     </style>
     <link href="lib/material-icons/material-icons.css" rel="stylesheet">
     <link href="lib/fontawesome/css/all.min.css" rel="stylesheet">
+    <script>
+        window.onerror=function(e,url,line){
+            console.log('Error!',e)
+            console.log('Url:',url)
+            console.log('Line:',line)
+        }
+    </script>
 </head>
 <body>
     <div id="app">
@@ -38,10 +60,17 @@
         </div>
     </div>
     <script src="cordova.js"></script>
+    <script src="js/dataUtils.js"></script>
     <script src="js/web-audio.js"></script>
+    <script src="js/audioUtils.js"></script>
     <script src="js/sass.js"></script>
     <script src="js/vue.js"></script>
+    <script src="js/vuex.js"></script>
     <script src="js/vue-router.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/loader.js"></script>
+    <script src="js/routes.js"></script>
+    <script src="js/storage.js"></script>
     <script src="js/language.js"></script>
     <script src="app.js?20211006"></script>
 </body>

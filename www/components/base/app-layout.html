@@ -1,11 +1,11 @@
 <!-- text-template -->
 <script type="text/x-template" id="app-layout-template">
-    <div class="app-layout default-style" :header="header" :footer="footer" :style="{fontSize:size+'rem'}" ref="layout">
-        <div v-if="header" is="app-toolbar" :title="title?title:language.translate('app_name')" >
+    <div class="app-layout default-style" :mode="mode" :header="header" :footer="footer" :style="{fontSize:size+'rem'}" ref="layout">
+        <div v-if="header" is="app-toolbar" :title="title?$tr(title):$tr('app_name')" >
             <slot name="toolbar"></slot>
         </div>
         <transition-group name="fade" tag="div" class="app-main">
-            <div class="main-content" key="content">
+            <div class="main-content flex-center" key="content">
                 <slot></slot>
             </div>
             <div class="app-message" v-if="message" :key="message?message:''"><div >{{message}}</div></div>
@@ -20,9 +20,9 @@
 <script type="text/javascript">
 
     var errorHandler=function(err, data){
-        console.log(err, data);
+        console.log('error',err, data);
+        console.log(Object.keys(err).join(','))
     }
-    var APPDATA_KEY='appdata.hamster'
     window.addEventListener("error",errorHandler);
     Vue.config.errorHandler = errorHandler;
 
@@ -30,10 +30,10 @@
         template: '#app-layout-template',
         data: function(){
             return {
-                size: 1.2,
+                size: 1.25,
                 lang: "es",
-                language: language,
                 level: 0,
+                mode: 'portrait',
                 message: null,
                 loading: false,
                 contentData: null,
@@ -56,6 +56,9 @@
             window.app=this
             var self = this
             var appLang = localStorage.getItem('applang')
+            document.title = this.$tr(this.title)
+            stopSounds()
+            stopAudio('bg')
             if (appLang && appLang != '') {
                 this.setLanguage({value:appLang})
             }else {
@@ -63,7 +66,7 @@
             }
             var applayout=self.$refs.layout;
             window.addEventListener("keyup",function(ev){
-                console.log('ev',ev.keyCode)
+                //console.log('ev',ev.keyCode)
                 if (ev.keyCode == 27) {
                     self.popup = null
                 }
@@ -86,37 +89,46 @@
                     document.body.setAttribute("scrolling",0);
                 }
             })
+            audioEngine.loadList({
+            })
         },
         methods: {
             changePosition: function(pos){
                 this.current=pos
             },
-            loadAppData: function(){
-                var appDataContent = localStorage.getItem(APPDATA_KEY)
-                var appData = {}
-                if (appDataContent) {
-                    appData = JSON.parse(appDataContent)
+            isPhone: function(){
+                return window.cordova!=null
+            },
+            isFullscreen: function(){
+                return window.innerHeight == screen.height
+            },
+            fullScreen: function(){
+                if (this.isFullscreen()) {
+                    document.exitFullscreen()
+                } else {
+                    document.body.requestFullscreen()
                 }
-                return appData
-            },
-            saveAppData: function(appData){
-                localStorage.setItem(APPDATA_KEY,JSON.stringify(appData))
-            },
-            translate: function (expr) {
-                return this.language.translate(expr)
+                this.$forceUpdate()
             },
             resize: function() {
                 var vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
                 var vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
-                if (vw>vh) {
-                    this.$refs.layout.setAttribute('mode','landscape')
+                if (vw>=1024 || vh>=1024){
+                    this.size=1.6
                 } else {
-                    this.$refs.layout.setAttribute('mode','portrait')
+                    this.size=1.2
+                }
+                this.$forceUpdate()
+                if (vw>vh) {
+                    this.mode='landscape'
+                } else {
+                    this.mode='portrait'
                 }
             },
-            alert: function(title,message,buttons,callback) {
+            alert: function(title,message,buttons,callback,className) {
                 this.popup={
                     title: title,
+                    className: className,
                     message: message,
                     callback: callback,
                     buttons: buttons
@@ -125,7 +137,7 @@
                 this.$forceUpdate()
             },
             confirm: function(title,message,callback) {
-                this.alert(title,message,["Cancel","Ok"],callback)
+                this.alert(title,message,{cancel:this.$tr("Cancel"),ok:this.$tr("Ok")},callback)
             },
             showMessage: function(msg, timeout){
                 clearTimeout(window.messageTimeout)
@@ -138,15 +150,21 @@
             setLanguage: function(options) {
                 console.log('lang', options.value)
                 this.lang = options.value
-                this.language.selected = this.lang
+                language.setLanguage(this.lang)
                 localStorage.setItem('applang', options.value)
+                if (window.content && window.content.$forceUpdate){
+                    window.content.$forceUpdate()
+                }
+                this.$forceUpdate()
             },
             setupLanguage: function(){
                 var self=this
-                this.alert(language.translate('Language'),language.translate('Select language'),{
-                    "en":language.en.lang_name,
-                    "es":language.es.lang_name
-                },function(button,idx){
+                var languages = {}
+                for (var idx in language.list){
+                    var key = language.list[idx]
+                    languages[key]='<img src=img/app/'+key+'.svg height=16> '+self.$tr('lang_name',key)
+                }
+                this.alert(self.$tr('Language'),self.$tr('Select language'),languages,function(button,idx){
                     self.setLanguage({value:idx})
                 })
             },
@@ -157,7 +175,11 @@
                 }
             }
         },
-        computed:{
+        watch:{
+            title: function(newValue){
+                console.log('title',newValue)
+                document.title = this.$tr(newValue)
+            }
         }
     });
 </script>
@@ -175,19 +197,34 @@
 }
 .app-main{
     flex:1;
-    padding: 0;
+    padding: 0px;
+    display: flex;
+    flex-direction: column;
 }
 .app-layout[footer='true'] .app-main{
-    padding: 0 16px;
+    padding-bottom: 32px;
 }
 .app-layout[header='true'] .app-main{
-    padding: 0 16px;
-    padding-top: 3rem;
+    padding-top: 2.2em;
 }
 .app-main > .main-content{
-    min-height: 100vh;
+    flex: 1;
     box-sizing: border-box;
     padding: 12px 0;
+    flex-direction: column;
+    position: relative;
+}
+.app-layout[full='true'] .app-main > .main-content{
+    padding:0px;
+}
+.app-main > .main-content > .main-container{
+    flex: 1;
+    width: 100%;
+}
+.flex-center{
+    display: flex;
+    align-items: center;
+    justify-content:center;
 }
 .app-message{
     position: fixed;
@@ -212,16 +249,21 @@
 #app button{
     color: #444;
     background-color: #FFC;
-    border: 2px solid #EA1;
-    padding: 0px 12px;
-    font-size: 1.25rem;
-    border-radius: 5px;
-    line-height: 1.5rem;
-    height: 2.4rem;
+    padding: 0px 16px;
+    font-size: 1em;
+    border-radius: 0.8em;
+    border: 0px;
+    line-height: 1.4em;
+    height: 1.8em;
     margin: 0 8px;
+    cursor: pointer;
+}
+#app button[disabled] {
+    opacity: 0.6;
+    cursor: default;
 }
 *[inactive='true']{
-    opacity: 0.4;
+    opacity: 0.25;
 }
 .material-icons{
     font-size: 1em;
@@ -237,6 +279,17 @@
   opacity: 0;
   font-size: 8px;
   display: none;
+}
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.5s linear;
+}
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  background-size: 20%;
+  height: 10px;
+  overflow: hidden;
 }
 .zoom-enter-active, .zoom-leave-active {
   transition: all .5s;
@@ -261,6 +314,46 @@
     background-color: rgba(200,200,200,0.8);
     color: #222;
 }
+
+.blink-animation {
+  animation: blinker 1.5s linear infinite;
+}
+
+@keyframes blinker {
+  40% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 0.5;
+  }
+}
+
+.shake-animation {
+  transform: rotate(45deg);
+  animation: shake 2s linear infinite;
+}
+
+@keyframes shake {
+  70% {
+    transform: rotate(45deg);
+  }
+  72% {
+    transform: rotate(55deg);
+  }
+  74% {
+    transform: rotate(45deg);
+  }
+  76% {
+    transform: rotate(35deg);
+  }
+  78% {
+    transform: rotate(45deg);
+  }
+}
+
 @media (prefers-color-scheme: dark) {
     .default-style{
         background-color: rgb(0,0,0);
@@ -275,6 +368,19 @@
     #app button{
         background-color: #FFA;
         color: #222;
+    }
+}
+@media (min-width: 1000px) {
+}
+@media (max-width:790px){
+    .app-layout[header='true'] .app-main{
+        padding-top: 4.2em;
+    }
+    .app-layout[header='true'][running='true'] .app-main{
+        padding-top: 2.2em;
+    }
+    .toolbar-padding{
+        padding-top: 2.2em;
     }
 }
 @media (max-width:480px){
