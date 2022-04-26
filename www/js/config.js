@@ -1,4 +1,5 @@
 var components=[
+    "base/app-menu",
     "base/app-layout",
     "base/app-popup",
     "base/app-toolbar",

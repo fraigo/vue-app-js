@@ -1,8 +1,8 @@
 <!-- text-template -->
 <script type="text/x-template" id="app-component-template">
     <div class="home" is="app-layout" ref="layout" :title="title" header="true">
-        <template slot="toolbar" >
-            <a key="home" v-if="contentId" @click="$router.push('/home')" ><i class="fas fa-home"></i></a>
+        <template slot="toolbar" is="menuitems" :layout="layout" ref="menu">
+            <a key="home" :active="!contentId" :disabled="!contentId" @click="$router.push('/home')" ><i class="fas fa-home"></i></a>
             <a key="lang" @click="layout.setupLanguage()" ><i class="fas fa-globe"></i></a>
         </template>
         <div v-if="!contentId">

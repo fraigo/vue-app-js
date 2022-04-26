@@ -1,0 +1,131 @@
+<!-- text-template -->
+<script type="text/x-template" id="menu-component-template">
+    <div class="menu-component">
+        <div class="menu-actions">
+            <a @click="fullScreen()" class="fullscreen-button" v-if="!layout.isPhone()">
+                <i v-if="!layout.isFullscreen()" class="fas fa-expand"></i>
+                <i v-if="layout.isFullscreen()" class="fas fa-compress"></i>
+            </a>
+            <slot></slot>
+        </div>
+    </div>
+</script>
+<script type="text/javascript">
+Vue.component('menuitems', {
+    template: '#menu-component-template',
+    data: function(){
+        return {
+        }
+    },
+    props: { 
+        layout: Object
+    },
+    mounted:function(){
+        console.log("menu-component mounted");
+        var self = this;
+        window.menubar = this
+        //console.log('route',this.$router)
+    },
+    methods: {
+        goTo: function(path){
+            if (this.$router.history.current.path!=path){
+                this.$router.push(path)
+            }
+        },
+        fullScreen: function(){
+            this.layout.fullScreen()
+            var self = this
+            setTimeout(function(){
+                self.$forceUpdate()
+            },1000)
+            
+        }
+    },
+    computed:{
+    }
+});
+</script>
+<style>
+.menu-component a{
+    display: inline-block;
+    margin: 0 8px;
+    position: relative;
+}
+.menu-component a[disabled]{
+    pointer-events: none;
+    opacity: 0.7;
+}
+.menu-actions{
+    display: inline-block;
+    margin-left: 12px;
+}
+.menu-actions a[active]{
+    width: 1.8em;
+    height: 0.5em;
+    opacity: 1;
+    position: relative;
+    top: -0.8em;
+}
+.menu-actions a[active] > i{
+    position: absolute;
+    display: flex;
+    justify-content:center;
+    align-items: center;
+    font-size: 1.4em;
+    width: 1.7em;
+    height: 1.7em;
+    border-radius: 99% 99%;
+    background-color: #aaa;
+    color: #000;
+    left: -0.2em;
+}
+body[phone='true'] .menu-component .fullscreen-button{
+    display: none;
+}
+@media(max-width: 860px){
+    .menu-component .menu-scores{
+        position: absolute;
+        top: 100%;
+        width: 100%;
+        right: 0;
+        text-align: center;
+        padding: 8px 0;
+        background-color: rgba(0,0,0,0.5);
+    }
+    .app-layout[running='true'] .menu-component .menu-scores{
+        display: none;
+    }
+    .menu-scores a{
+        margin: 0 12px;
+    }
+}
+@media(max-width: 440px){
+    .menu-component a{
+        font-size: 0.9em;
+    }
+    .menu-scores a{
+        margin: 0 8px;
+    }
+}
+@media(max-width: 360px){
+    .menu-component a{
+        font-size: 0.8em;
+    }
+    .menu-actions a{
+        margin: 0 6px;
+    }
+    .menu-scores a{
+        margin: 0 6px;
+    }
+}
+@media (prefers-color-scheme: dark){
+    .menu-actions a > i{
+        color: #eee;
+    }
+    .menu-actions a[active] > i{
+        background-color: #000;
+        color: #fff;
+    }
+}
+</style>
+    
