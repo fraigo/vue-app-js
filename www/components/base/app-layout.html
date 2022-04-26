@@ -99,8 +99,13 @@
             isPhone: function(){
                 return window.cordova!=null
             },
+            fullscreenEnabled: function(){
+                var enabled = 'fullScreen' in document || 'mozFullScreen' in document || 'webkitIsFullScreen' in document
+                return enabled
+            },
             isFullscreen: function(){
-                return window.innerHeight == screen.height
+                var activated = document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen
+                return activated
             },
             fullScreen: function(){
                 if (this.isFullscreen()) {

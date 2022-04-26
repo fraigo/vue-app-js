@@ -1,9 +1,9 @@
 <!-- text-template -->
 <script type="text/x-template" id="app-component-template">
     <div class="home" is="app-layout" ref="layout" :title="title" header="true">
-        <template slot="toolbar" is="menuitems" :layout="layout" ref="menu">
-            <a key="home" :active="!contentId" :disabled="!contentId" @click="$router.push('/home')" ><i class="fas fa-home"></i></a>
+        <template slot="toolbar" is="menuitems" :layout="layout" ref="menu" :fullscreen="true">
             <a key="lang" @click="layout.setupLanguage()" ><i class="fas fa-globe"></i></a>
+            <a key="home" :active="!contentId" :disabled="!contentId" @click="$router.push('/home')" ><i class="fas fa-home"></i></a>
         </template>
         <div v-if="!contentId">
             <button @click="$router.push('/home/example')">View Data</button>

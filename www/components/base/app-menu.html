@@ -1,8 +1,7 @@
-<!-- text-template -->
 <script type="text/x-template" id="menu-component-template">
     <div class="menu-component">
         <div class="menu-actions">
-            <a @click="fullScreen()" class="fullscreen-button" v-if="!layout.isPhone()">
+            <a @click="toggleFullScreen()" class="fullscreen-button" v-if="fullscreen && !layout.isPhone()">
                 <i v-if="!layout.isFullscreen()" class="fas fa-expand"></i>
                 <i v-if="layout.isFullscreen()" class="fas fa-compress"></i>
             </a>
@@ -18,7 +17,8 @@ Vue.component('menuitems', {
         }
     },
     props: { 
-        layout: Object
+        layout: Object,
+        fullscreen: Boolean
     },
     mounted:function(){
         console.log("menu-component mounted");
@@ -32,7 +32,7 @@ Vue.component('menuitems', {
                 this.$router.push(path)
             }
         },
-        fullScreen: function(){
+        toggleFullScreen: function(){
             this.layout.fullScreen()
             var self = this
             setTimeout(function(){
